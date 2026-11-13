@@ -1,0 +1,36 @@
+name: Windows ARM64 build
+
+on:
+  push:
+    branches: [build/windows-arm64]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      GOOS: windows
+      GOARCH: arm64
+      CGO_ENABLED: '0'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: 42d4a1abb746c0a6c0ad0579c253d1a662affed4
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+        with:
+          go-version-file: go.mod
+      - name: Build Windows ARM64 executable
+        shell: bash
+        run: |
+          mkdir -p dist
+          go build -trimpath -tags="$(cat build-tags.txt)" -ldflags="-s -w -X main.version=42d4a1a" -o dist/tailcat.exe ./cmd/tailcat
+          cp LICENSE README.md dist/
+          cd dist
+          sha256sum tailcat.exe > checksums.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tailcat-windows-arm64-42d4a1a
+          path: dist/
+          if-no-files-found: error
